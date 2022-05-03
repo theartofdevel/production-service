@@ -1,0 +1,5 @@
+.idea
+.tmp
+*.log
+/app/build
+.DS_Store

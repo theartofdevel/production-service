@@ -1,0 +1,72 @@
+---
+
+stages:
+  - build
+  - deploy
+
+before_script:
+  - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} ${CI_REGISTRY}
+
+after_script:
+  - docker logout ${CI_REGISTRY}
+
+.extend-tags:
+  tags:
+    - docker
+    - shared
+
+build:
+  stage: build
+  extends:
+    - .extend-tags
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - docker build -f Dockerfile -t ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA:0:8} .
+    - docker tag ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA:0:8} ${CI_REGISTRY_IMAGE}:latest
+    - docker push ${CI_REGISTRY_IMAGE}:latest
+
+deploy:
+  stage: deploy
+  before_script:
+    - command -v ssh-agent >/dev/null
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    - ansible-playbook -i taod.ru, ansible/deploy.yml
+      --extra-vars app_name=tf-topic-app
+      --extra-vars local_pwd=$PWD
+      --extra-vars ansible_ssh_user=${ANSIBLE_SSH_USER}
+      --extra-vars ansible_ssh_port=${ANSIBLE_SSH_PORT}
+      --extra-vars ansible_become_user=${ANSIBLE_BECOME_USER}
+      --extra-vars ansible_become_password=${ANSIBLE_BECOME_PASSWORD}
+      --extra-vars registry=${CI_REGISTRY}
+      --extra-vars registry_user=gitlab-ci-token
+      --extra-vars registry_password=${CI_JOB_TOKEN}
+      --extra-vars docker_network=${DOCKER_NETWORK}
+      --extra-vars app_port=${APP_PORT}
+      --extra-vars app_docker_image=${CI_REGISTRY_IMAGE}:latest
+      --extra-vars is_debug=${IS_DEBUG}
+      --extra-vars is_development=${IS_DEVELOPMENT}
+      --extra-vars listen_type=${LISTEN_TYPE}
+      --extra-vars bind_ip=${BIND_IP}
+      --extra-vars port=${PORT}
+      --extra-vars log_level=${LOG_LEVEL}
+      --extra-vars mongo_host=${MONGO_HOST}
+      --extra-vars mongo_port=${MONGO_PORT}
+      --extra-vars mongo_username=${MONGO_USERNAME}
+      --extra-vars mongo_password=${MONGO_PASSWORD}
+      --extra-vars mongo_auth_db=${MONGO_AUTH_DB}
+      --extra-vars mongo_database=${MONGO_DATABASE}
+      --extra-vars mongo_task_collection=${MONGO_TASK_COLLECTION}
+      --extra-vars mongo_list_collection=${MONGO_LIST_COLLECTION}
+      --extra-vars mongo_topic_collection=${MONGO_TOPIC_COLLECTION}
+      --extra-vars mongo_user_collection=${MONGO_USER_COLLECTION}
+      --extra-vars minio_endpoint=${MINIO_ENDPOINT}
+      --extra-vars minio_accesskey=${MINIO_ACCESSKEY}
+      --extra-vars minio_secretkey=${MINIO_SECRETKEY}
+      --extra-vars minio_bucket=${MINIO_BUCKET}
+      --diff
+      --verbose
