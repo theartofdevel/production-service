@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"production_service/internal/config"
 )
 
 type Client interface {
@@ -21,12 +20,31 @@ type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 }
 
+type pgConfig struct {
+	Username	string
+	Password	string
+	Host		string
+	Port		string
+	Database	string
+}
+
+// NewPgConfig creates new pg config instance
+func NewPgConfig(username string, password string, host string, port string, database string) *pgConfig {
+	return &pgConfig{
+		Username:	username,
+		Password:	password,
+		Host:		host,
+		Port:		port,
+		Database:	database,
+	}
+}
+
 // NewClient TODO opensource contributing убрать зависимость от конфига из internal
-func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg *config.Config) (pool *pgxpool.Pool, err error) {
+func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg *pgConfig) (pool *pgxpool.Pool, err error) {
 	dsn := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
-		cfg.PostgreSQL.Username, cfg.PostgreSQL.Password,
-		cfg.PostgreSQL.Host, cfg.PostgreSQL.Port, cfg.PostgreSQL.Database,
+		cfg.Username, cfg.Password,
+		cfg.Host, cfg.Port, cfg.Database,
 	)
 
 	err = DoWithAttempts(func() error {

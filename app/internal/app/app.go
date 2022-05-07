@@ -11,13 +11,16 @@ import (
 	"path/filepath"
 	"time"
 
+	_ "production_service/docs"
+	"production_service/internal/config"
+	"production_service/pkg/client/postgresql"
+	"production_service/pkg/logging"
+	"production_service/pkg/metric"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "production_service/docs"
-	"production_service/internal/config"
-	"production_service/pkg/logging"
-	"production_service/pkg/metric"
 )
 
 type App struct {
@@ -25,6 +28,7 @@ type App struct {
 	logger     *logging.Logger
 	router     *httprouter.Router
 	httpServer *http.Server
+	pgClient   *pgxpool.Pool
 }
 
 func NewApp(config *config.Config, logger *logging.Logger) (App, error) {
@@ -39,10 +43,20 @@ func NewApp(config *config.Config, logger *logging.Logger) (App, error) {
 	metricHandler := metric.Handler{}
 	metricHandler.Register(router)
 
+	pgConfig := postgresql.NewPgConfig(
+		config.PostgreSQL.Username, config.PostgreSQL.Password,
+		config.PostgreSQL.Host, config.PostgreSQL.Port, config.PostgreSQL.Database,
+	)
+	pgClient, err := postgresql.NewClient(context.Background(), 5, time.Second*5, pgConfig)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	return App{
-		cfg:    config,
-		logger: logger,
-		router: router,
+		cfg:      config,
+		logger:   logger,
+		router:   router,
+		pgClient: pgClient,
 	}, nil
 }
 
