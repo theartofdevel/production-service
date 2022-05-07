@@ -2,14 +2,12 @@ package postgresql
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"production_service/internal/config"
 )
 
 type Client interface {
@@ -22,12 +20,8 @@ type Client interface {
 }
 
 // NewClient TODO opensource contributing убрать зависимость от конфига из internal
-func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg *config.Config) (pool *pgxpool.Pool, err error) {
-	dsn := fmt.Sprintf(
-		"postgresql://%s:%s@%s:%s/%s",
-		cfg.PostgreSQL.Username, cfg.PostgreSQL.Password,
-		cfg.PostgreSQL.Host, cfg.PostgreSQL.Port, cfg.PostgreSQL.Database,
-	)
+func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg Config) (pool *pgxpool.Pool, err error) {
+	dsn := cfg.MakeDSN()
 
 	err = DoWithAttempts(func() error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
