@@ -49,11 +49,7 @@ func NewApp(config *config.Config, logger *logging.Logger) (App, error) {
 	)
 	pgClient, err := postgresql.NewClient(context.Background(), 5, time.Second*5, pgConfig)
 	if err != nil {
-		return App{
-			cfg:    config,
-			logger: logger,
-			router: router,
-		}, err
+		logger.Fatal(err)
 	}
 
 	return App{
