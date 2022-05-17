@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -21,25 +21,25 @@ type Client interface {
 }
 
 type pgConfig struct {
-	Username	string
-	Password	string
-	Host		string
-	Port		string
-	Database	string
+	Username string
+	Password string
+	Host     string
+	Port     string
+	Database string
 }
 
 // NewPgConfig creates new pg config instance
 func NewPgConfig(username string, password string, host string, port string, database string) *pgConfig {
 	return &pgConfig{
-		Username:	username,
-		Password:	password,
-		Host:		host,
-		Port:		port,
-		Database:	database,
+		Username: username,
+		Password: password,
+		Host:     host,
+		Port:     port,
+		Database: database,
 	}
 }
 
-// NewClient TODO opensource contributing убрать зависимость от конфига из internal
+// NewClient
 func NewClient(ctx context.Context, maxAttempts int, maxDelay time.Duration, cfg *pgConfig) (pool *pgxpool.Pool, err error) {
 	dsn := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",

@@ -13,6 +13,7 @@ import (
 
 	_ "production_service/docs"
 	"production_service/internal/config"
+	"production_service/internal/domain/product/storage"
 	"production_service/pkg/client/postgresql"
 	"production_service/pkg/logging"
 	"production_service/pkg/metric"
@@ -51,6 +52,13 @@ func NewApp(config *config.Config, logger *logging.Logger) (App, error) {
 	if err != nil {
 		logger.Fatal(err)
 	}
+
+	productStorage := storage.NewProductStorage(pgClient, logger)
+	all, err := productStorage.All(context.Background())
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Fatal(all)
 
 	return App{
 		cfg:      config,
