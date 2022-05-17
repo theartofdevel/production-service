@@ -13,7 +13,7 @@ const (
 type Handler struct {
 }
 
-// Register TODO fix dependency on httprouter
+// Register TODO Задача №4. fix dependency on httprouter
 func (h *Handler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, URL, h.Heartbeat)
 }
