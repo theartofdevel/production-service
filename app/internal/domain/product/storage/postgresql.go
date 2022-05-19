@@ -5,7 +5,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"production_service/internal/domain/product/model"
-	"production_service/pkg/client/postgresql"
 	db "production_service/pkg/client/postgresql/model"
 	"production_service/pkg/logging"
 )
@@ -102,7 +101,7 @@ func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
 		if err = rows.Scan(
 			&p.ID, &p.Name, &p.Description, &p.ImageID, &p.Price, &p.CurrencyID, &p.Rating, &p.CreatedAt, &p.UpdatedAt,
 		); err != nil {
-			err = db.ErrScan(postgresql.ParsePgError(err))
+			err = db.ErrScan(err)
 			logger.Error(err)
 			return nil, err
 		}
