@@ -37,7 +37,7 @@ func (s *ProductStorage) queryLogger(sql, table string, args []interface{}) *log
 	})
 }
 
-func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
+func (s *ProductStorage) All(ctx context.Context, filter *db.Filter, sorts ...db.Sort) ([]model.Product, error) {
 	query := s.queryBuilder.Select("id").
 		Column("name").
 		Column("description").
@@ -49,7 +49,6 @@ func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
 		Column("updated_at").
 		From(scheme + "." + table)
 
-	// TODO Задача №2*. Реализовать фильтрацию и сортировку по полям
 	/*
 
 		!!!! НЕ ДЕЛАТЬ
@@ -75,6 +74,12 @@ func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
 		3. вызвать эти методы в методе product.storage.postgresql.All()
 
 	*/
+	if filter != nil {
+		query = filter.UseSelectBuilder(query)
+	}
+	for _, sort := range sorts {
+		query = sort.UseSelectBuilder(query)
+	}
 
 	sql, args, err := query.ToSql()
 	logger := s.queryLogger(sql, table, args)

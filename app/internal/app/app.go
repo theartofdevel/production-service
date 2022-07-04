@@ -54,7 +54,7 @@ func NewApp(config *config.Config, logger *logging.Logger) (App, error) {
 	}
 
 	productStorage := storage.NewProductStorage(pgClient, logger)
-	all, err := productStorage.All(context.Background())
+	all, err := productStorage.All(context.Background(), nil)
 	if err != nil {
 		logger.Fatal(err)
 	}
