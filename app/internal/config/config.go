@@ -1,8 +1,11 @@
 package config
 
 import (
+	"flag"
 	"log"
+	"os"
 	"sync"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -10,11 +13,20 @@ import (
 type Config struct {
 	IsDebug       bool `env:"IS_DEBUG" env-default:"false"`
 	IsDevelopment bool `env:"IS_DEV" env-default:"false"`
-	Listen        struct {
-		Type       string `env:"LISTEN_TYPE" env-default:"port" env-description:"'port' or 'sock'. if 'sock' then env 'SOCKET_FILE' is required"`
-		BindIP     string `env:"BIND_IP" env-default:"0.0.0.0"`
-		Port       string `env:"PORT" env-default:"10000"`
-		SocketFile string `env:"SOCKET_FILE" env-default:"app.sock"`
+	HTTP          struct {
+		IP           string        `yaml:"ip" env:"HTTP-IP"`
+		Port         int           `yaml:"ip" env:"HTTP-PORT"`
+		ReadTimeout  time.Duration `yaml:"ip" env:"HTTP-READ-TIMEOUT"`
+		WriteTimeout time.Duration `yaml:"ip" env:"HTTP-WRITE-TIMEOUT"`
+		CORS         struct {
+			AllowedMethods     []string `yaml:"allowed_methods" env:"HTTP-CORS-ALLOWED-METHODS"`
+			AllowedOrigins     []string `yaml:"allowed_origins"`
+			AllowCredentials   bool     `yaml:"allow_credentials"`
+			AllowedHeaders     []string `yaml:"allowed_headers"`
+			OptionsPassthrough bool     `yaml:"options_passthrough"`
+			ExposedHeaders     []string `yaml:"exposed_headers"`
+			Debug              bool     `yaml:"debug"`
+		} `yaml:"cors"`
 	}
 	AppConfig struct {
 		LogLevel  string `env:"LOG_LEVEL" env-default:"trace"`
@@ -32,17 +44,34 @@ type Config struct {
 	}
 }
 
+const (
+	EnvConfigPathName  = "CONFIG-PATH"
+	FlagConfigPathName = "config"
+)
+
+var configPath string
 var instance *Config
 var once sync.Once
 
 func GetConfig() *Config {
 	once.Do(func() {
-		log.Print("gather config")
+		flag.StringVar(&configPath, FlagConfigPathName, "configs/config.local.yaml", "this is app config file")
+		flag.Parse()
+
+		log.Print("config init")
+
+		if configPath == "" {
+			configPath = os.Getenv(EnvConfigPathName)
+		}
+
+		if configPath == "" {
+			log.Fatal("config path is required")
+		}
 
 		instance = &Config{}
 
 		if err := cleanenv.ReadEnv(instance); err != nil {
-			helpText := "The Art of Development - Monolith Notes System"
+			helpText := "The Art of Development - Production Service"
 			help, _ := cleanenv.GetDescription(instance, &helpText)
 			log.Print(help)
 			log.Fatal(err)

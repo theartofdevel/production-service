@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package common.filter.v1;
+
+option go_package = "production_service/gen/go/common/filter/v1;pb_common_filter";
+
+// Sorting array
+message Sort {
+  string field = 1;
+}

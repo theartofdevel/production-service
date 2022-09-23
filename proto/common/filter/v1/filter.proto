@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package common.filter.v1;
+
+option go_package = "production_service/gen/go/common/filter/v1;pb_common_filter";
+
+message Pagination {
+  uint64 limit = 1;
+  uint64 offset = 2;
+}
+
+// Filter for string values, example: ?email.op=eq&email.val=me@example.com
+message StringFieldFilter {
+  enum Operator {
+    OPERATOR_UNSPECIFIED = 0;
+    OPERATOR_EQ = 1;
+    OPERATOR_NEQ = 2;
+    OPERATOR_LIKE = 3;
+  }
+  Operator op = 1;
+  string val = 2;
+}
+
+// Filter for int values, example: ?age.op=gt&age.val=18
+message IntFieldFilter {
+  enum Operator {
+    OPERATOR_UNSPECIFIED = 0;
+    OPERATOR_EQ = 1;
+    OPERATOR_NEQ = 2;
+    OPERATOR_LT = 3;
+    OPERATOR_LTE = 4;
+    OPERATOR_GT = 5;
+    OPERATOR_GTE = 6;
+  }
+  Operator op = 1;
+  string val = 2;
+}
