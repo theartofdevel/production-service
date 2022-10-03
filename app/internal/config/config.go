@@ -11,13 +11,13 @@ import (
 )
 
 type Config struct {
-	IsDebug       bool `env:"IS_DEBUG" env-default:"false"`
-	IsDevelopment bool `env:"IS_DEV" env-default:"false"`
+	IsDebug       bool `yaml:"is-debug" env:"IS_DEBUG" env-default:"false"`
+	IsDevelopment bool `yaml:"is-development" env:"IS_DEV" env-default:"false"`
 	HTTP          struct {
 		IP           string        `yaml:"ip" env:"HTTP-IP"`
-		Port         int           `yaml:"ip" env:"HTTP-PORT"`
-		ReadTimeout  time.Duration `yaml:"ip" env:"HTTP-READ-TIMEOUT"`
-		WriteTimeout time.Duration `yaml:"ip" env:"HTTP-WRITE-TIMEOUT"`
+		Port         int           `yaml:"port" env:"HTTP-PORT"`
+		ReadTimeout  time.Duration `yaml:"read-timeout" env:"HTTP-READ-TIMEOUT"`
+		WriteTimeout time.Duration `yaml:"write-timeout" env:"HTTP-WRITE-TIMEOUT"`
 		CORS         struct {
 			AllowedMethods     []string `yaml:"allowed_methods" env:"HTTP-CORS-ALLOWED-METHODS"`
 			AllowedOrigins     []string `yaml:"allowed_origins"`
@@ -27,21 +27,25 @@ type Config struct {
 			ExposedHeaders     []string `yaml:"exposed_headers"`
 			Debug              bool     `yaml:"debug"`
 		} `yaml:"cors"`
-	}
+	} `yaml:"http"`
+	GRPC struct {
+		IP   string `yaml:"ip" env:"GRPC-IP"`
+		Port int    `yaml:"port" env:"GRPC-PORT"`
+	} `yaml:"grpc"`
 	AppConfig struct {
-		LogLevel  string `env:"LOG_LEVEL" env-default:"trace"`
+		LogLevel  string `yaml:"log-level" env:"LOG_LEVEL" env-default:"trace"`
 		AdminUser struct {
-			Email    string `env:"ADMIN_EMAIL" env-default:"admin"`
-			Password string `env:"ADMIN_PWD" env-default:"admin"`
-		}
-	}
+			Email    string `yaml:"email" env:"ADMIN_EMAIL" env-default:"admin"`
+			Password string `yaml:"password" env:"ADMIN_PWD" env-default:"admin"`
+		} `yaml:"admin"`
+	} `yaml:"app"`
 	PostgreSQL struct {
-		Username string `env:"PSQL_USERNAME" env-required:"true"`
-		Password string `env:"PSQL_PASSWORD" env-required:"true"`
-		Host     string `env:"PSQL_HOST" env-required:"true"`
-		Port     string `env:"PSQL_PORT" env-required:"true"`
-		Database string `env:"PSQL_DATABASE" env-required:"true"`
-	}
+		Username string `yaml:"username" env:"PSQL_USERNAME" env-required:"true"`
+		Password string `yaml:"password" env:"PSQL_PASSWORD" env-required:"true"`
+		Host     string `yaml:"host" env:"PSQL_HOST" env-required:"true"`
+		Port     string `yaml:"port" env:"PSQL_PORT" env-required:"true"`
+		Database string `yaml:"database" env:"PSQL_DATABASE" env-required:"true"`
+	} `yaml:"postgresql"`
 }
 
 const (
@@ -70,7 +74,7 @@ func GetConfig() *Config {
 
 		instance = &Config{}
 
-		if err := cleanenv.ReadEnv(instance); err != nil {
+		if err := cleanenv.ReadConfig(configPath, instance); err != nil {
 			helpText := "The Art of Development - Production Service"
 			help, _ := cleanenv.GetDescription(instance, &helpText)
 			log.Print(help)

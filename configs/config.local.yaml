@@ -1,0 +1,46 @@
+---
+app:
+  is-debug: true
+  id: prod-service
+  name: Production Service
+  log-level: trace
+  admin:
+    email: admin@taod.ru
+    password: "123"
+
+grpc:
+  ip: 0.0.0.0
+  port: 30000
+
+http:
+  ip: 0.0.0.0
+  port: 30001
+  cors:
+    debug: true
+    allowed-methods: ["GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE"]
+    allowed-origins:
+      - "http://localhost:3000"
+    allow-credentials: true
+    allowed-headers:
+      - "Authorization"
+      - "Location"
+      - "Charset"
+      - "Access-Control-Allow-Origin"
+      - "Content-Type"
+      - "Origin"
+      - "Accept"
+      - "Content-Length"
+      - "Accept-Encoding"
+      - "X-CSRF-Token"
+    options-passthrough: true
+    exposed-headers:
+      - "Location"
+      - "Authorization"
+      - "Content-Disposition"
+
+postgresql:
+  host: 0.0.0.0
+  port: "5432"
+  username: postgres
+  password: postgres
+  database: prodservice
