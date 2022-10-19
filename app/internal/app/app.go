@@ -15,6 +15,9 @@ import (
 	_ "production_service/docs"
 	"production_service/internal/config"
 	product "production_service/internal/controller/grpc/v1/product"
+	"production_service/internal/domain/product/policy"
+	"production_service/internal/domain/product/service"
+	"production_service/internal/domain/product/storage"
 	"production_service/pkg/client/postgresql"
 	"production_service/pkg/logging"
 	"production_service/pkg/metric"
@@ -38,14 +41,14 @@ type App struct {
 }
 
 func NewApp(ctx context.Context, config *config.Config) (App, error) {
-	logging.GetLogger(ctx).Info("router initializing")
+	logging.Info(ctx, "router initializing")
 	router := httprouter.New()
 
-	logging.GetLogger(ctx).Info("swagger docs initializing")
+	logging.Info(ctx, "swagger docs initializing")
 	router.Handler(http.MethodGet, "/swagger", http.RedirectHandler("/swagger/index.html", http.StatusMovedPermanently))
 	router.Handler(http.MethodGet, "/swagger/*any", httpSwagger.WrapHandler)
 
-	logging.GetLogger(ctx).Info("heartbeat metric initializing")
+	logging.Info(ctx, "heartbeat metric initializing")
 	metricHandler := metric.Handler{}
 	metricHandler.Register(router)
 
@@ -55,11 +58,14 @@ func NewApp(ctx context.Context, config *config.Config) (App, error) {
 	)
 	pgClient, err := postgresql.NewClient(ctx, 5, time.Second*5, pgConfig)
 	if err != nil {
-		logging.GetLogger(ctx).Fatal(err)
+		logging.GetLogger().Fatal(ctx, err)
 	}
 
-	// productStorage := storage.NewProductStorage(pgClient)
+	productStorage := storage.NewProductStorage(pgClient)
+	productService := service.NewProductService(productStorage)
+	productPolicy := policy.NewProductPolicy(productService)
 	productServiceServer := product.NewServer(
+		productPolicy,
 		pb_prod_products.UnimplementedProductServiceServer{},
 	)
 
@@ -83,7 +89,7 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) startGRPC(ctx context.Context, server pb_prod_products.ProductServiceServer) error {
-	logger := logging.GetLogger(ctx).WithFields(map[string]interface{}{
+	logger := logging.WithFields(ctx, map[string]interface{}{
 		"IP":   a.cfg.GRPC.IP,
 		"Port": a.cfg.GRPC.Port,
 	})
@@ -106,7 +112,7 @@ func (a *App) startGRPC(ctx context.Context, server pb_prod_products.ProductServ
 }
 
 func (a *App) startHTTP(ctx context.Context) error {
-	logger := logging.GetLogger(ctx).WithFields(map[string]interface{}{
+	logger := logging.WithFields(ctx, map[string]interface{}{
 		"IP":   a.cfg.HTTP.IP,
 		"Port": a.cfg.HTTP.Port,
 	})

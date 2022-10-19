@@ -4,7 +4,8 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
-	"production_service/internal/domain/product/model"
+	"production_service/pkg/api/filter"
+	"production_service/pkg/api/sort"
 	db "production_service/pkg/client/postgresql/model"
 	"production_service/pkg/logging"
 )
@@ -14,8 +15,8 @@ type ProductStorage struct {
 	client       PostgreSQLClient
 }
 
-func NewProductStorage(client PostgreSQLClient) ProductStorage {
-	return ProductStorage{
+func NewProductStorage(client PostgreSQLClient) *ProductStorage {
+	return &ProductStorage{
 		queryBuilder: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 		client:       client,
 	}
@@ -26,7 +27,10 @@ const (
 	table  = "product"
 )
 
-func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
+func (s *ProductStorage) All(ctx context.Context, filtering filter.Filterable, sorting sort.Sortable) ([]Product, error) {
+	sortDB := db.NewSortOptions(sorting)
+	filterDB := db.NewFilters(filtering)
+
 	query := s.queryBuilder.Select("id").
 		Column("name").
 		Column("description").
@@ -38,35 +42,11 @@ func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
 		Column("updated_at").
 		From(scheme + "." + table)
 
-	// TODO Задача №2*. Реализовать фильтрацию и сортировку по полям
-	/*
-
-		!!!! НЕ ДЕЛАТЬ
-		Transport Layer: HTTP / AMQP / WS
-		/api/products?name=eq:купон&price=lt:300&sort_by=created_at&sort_order=desc
-
-		|
-		V
-
-		!!!! НЕ ДЕЛАТЬ
-		Service Layer
-		* FilterOptions --> FilterOptions for Storage
-		* SortOptions --> SortOptions for Storage
-
-		|
-		V
-
-		!!!! ДЕЛАТЬ !!!!
-		Storage Layer
-
-		1. Создать структуры сортировки и фильтрации которые будут аргументами в методе All
-		2. Методы которые принимают query и обогащают его филтрацией и соритровкой.
-		3. вызвать эти методы в методе product.storage.postgresql.All()
-
-	*/
+	query = filterDB.Enrich(query, "")
+	query = sortDB.Sort(query, "")
 
 	sql, args, err := query.ToSql()
-	logger := logging.GetLogger(ctx).WithFields(map[string]interface{}{
+	logger := logging.WithFields(ctx, map[string]interface{}{
 		"sql":   sql,
 		"table": table,
 		"args":  args,
@@ -87,10 +67,10 @@ func (s *ProductStorage) All(ctx context.Context) ([]model.Product, error) {
 
 	defer rows.Close()
 
-	list := make([]model.Product, 0)
+	list := make([]Product, 0)
 
 	for rows.Next() {
-		p := model.Product{}
+		p := Product{}
 		if err = rows.Scan(
 			&p.ID, &p.Name, &p.Description, &p.ImageID, &p.Price, &p.CurrencyID, &p.Rating, &p.CreatedAt, &p.UpdatedAt,
 		); err != nil {

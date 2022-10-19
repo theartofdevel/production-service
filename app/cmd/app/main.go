@@ -12,18 +12,16 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	logger := logging.GetLogger(ctx)
-
-	logger.Info("config initializing")
+	logging.Info(ctx, "config initializing")
 	cfg := config.GetConfig()
 
-	ctx = logging.ContextWithLogger(ctx, logger)
+	ctx = logging.ContextWithLogger(ctx, logging.NewLogger())
 
 	a, err := app.NewApp(ctx, cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logging.Fatal(ctx, err)
 	}
 
-	logger.Info("Running Application")
+	logging.Info(ctx, "Running Application")
 	a.Run(ctx)
 }

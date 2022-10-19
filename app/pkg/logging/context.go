@@ -14,5 +14,5 @@ func loggerFromContext(ctx context.Context) Logger {
 	if l, ok := ctx.Value(ctxLogger{}).(*logger); ok {
 		return l
 	}
-	return NewLogger()
+	return defLogger
 }

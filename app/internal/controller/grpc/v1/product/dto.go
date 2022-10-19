@@ -13,7 +13,7 @@ type CreateProductDTO struct {
 	Specification string
 }
 
-func NewCreateProductDTOFromPB(product *pb_prod_products.ProductServiceCreateProductRequest) *CreateProductDTO {
+func NewCreateProductDTOFromPB(product *pb_prod_products.CreateProductRequest) *CreateProductDTO {
 	return &CreateProductDTO{
 		Name:          product.GetName(),
 		Description:   product.GetDescription(),
