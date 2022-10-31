@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/Masterminds/squirrel v1.5.2
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
+	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ilyakaznacheev/cleanenv v1.2.6
@@ -16,8 +17,8 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/swaggo/http-swagger v1.2.8
 	github.com/swaggo/swag v1.8.1
-	github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221003122415-fb5049afbe0e
-	github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20220924232425-ccda377bfdbd
+	github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030230920-7b2b349c1c8e
+	github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221030234413-e95bfb978124
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.50.1
 )
@@ -55,5 +56,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
-
-replace github.com/theartofdevel/production-service-contracts/gen/go/prod_service => /Users/dikkini/go/src/github.com/theartofdevel/production-service-contracts/gen/go/prod_service

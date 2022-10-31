@@ -15,9 +15,9 @@ import (
 	_ "production_service/docs"
 	"production_service/internal/config"
 	product "production_service/internal/controller/grpc/v1/product"
+	"production_service/internal/domain/product/dao"
 	"production_service/internal/domain/product/policy"
 	"production_service/internal/domain/product/service"
-	"production_service/internal/domain/product/storage"
 	"production_service/pkg/client/postgresql"
 	"production_service/pkg/logging"
 	"production_service/pkg/metric"
@@ -61,7 +61,7 @@ func NewApp(ctx context.Context, config *config.Config) (App, error) {
 		logging.GetLogger().Fatal(ctx, err)
 	}
 
-	productStorage := storage.NewProductStorage(pgClient)
+	productStorage := dao.NewProductStorage(pgClient)
 	productService := service.NewProductService(productStorage)
 	productPolicy := policy.NewProductPolicy(productService)
 	productServiceServer := product.NewServer(

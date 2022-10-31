@@ -68,6 +68,8 @@ github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
+github.com/google/uuid v1.1.2 h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=
+github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 h1:+9834+KizmvFV7pXQGSXQTsaWhq2GjuNUt0aUU0YBYw=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
 github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
@@ -201,8 +203,10 @@ github.com/swaggo/http-swagger v1.2.8 h1:TVjxLU7qoqofJ9qynJazmpTGs/p4Kx9FTp7YYwO
 github.com/swaggo/http-swagger v1.2.8/go.mod h1:FrQwV7rx+A5t11PIX8d+tFJa2GKx11RdAXQptllPQHg=
 github.com/swaggo/swag v1.8.1 h1:JuARzFX1Z1njbCGz+ZytBR15TFJwF2Q7fu8puJHhQYI=
 github.com/swaggo/swag v1.8.1/go.mod h1:ugemnJsPZm/kRwFUnzBlbHRd0JY9zE1M4F+uy2pAaPQ=
-github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221003122415-fb5049afbe0e h1:O2NSNP8Z4pvlMZFyTHcij7JyKzdqshSYyxdasmjQjdU=
-github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221003122415-fb5049afbe0e/go.mod h1:BW9g/US34xKv6S0hvnbx8TPle9GK8tzMtoKLXnOoLJ0=
+github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030230920-7b2b349c1c8e h1:BF6zqxZn7spROo2c8iHYgPg6bt38lhcDhbdgrIS0Z8A=
+github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030230920-7b2b349c1c8e/go.mod h1:BW9g/US34xKv6S0hvnbx8TPle9GK8tzMtoKLXnOoLJ0=
+github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221030234413-e95bfb978124 h1:3/s1vWV8GHqAa5nEyUdU7HOPC/OyRl/INUtljjBKhV4=
+github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221030234413-e95bfb978124/go.mod h1:gkMyUf+otralzM4s3SAYlskJ/Mq0jDwn6k/SjINahKU=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
