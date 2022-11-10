@@ -14,6 +14,8 @@ type productService interface {
 	All(context.Context, filter.Filterable, sort.Sortable) ([]*model.Product, error)
 	Create(context.Context, *dto.CreateProductDTO) (*model.Product, error)
 	One(context.Context, string) (*model.Product, error)
+	Delete(context.Context, string) error
+	Update(context.Context, string, *dto.UpdateProductDTO) error
 }
 
 type ProductPolicy struct {
@@ -39,4 +41,12 @@ func (p *ProductPolicy) CreateProduct(ctx context.Context, d *dto.CreateProductD
 
 func (p *ProductPolicy) One(ctx context.Context, id string) (*model.Product, error) {
 	return p.productService.One(ctx, id)
+}
+
+func (p *ProductPolicy) Delete(ctx context.Context, id string) error {
+	return p.productService.Delete(ctx, id)
+}
+
+func (p *ProductPolicy) Update(ctx context.Context, id string, d *dto.UpdateProductDTO) error {
+	return p.productService.Update(ctx, id, d)
 }

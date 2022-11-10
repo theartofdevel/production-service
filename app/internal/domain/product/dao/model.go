@@ -9,11 +9,10 @@ import (
 )
 
 type ProductStorage struct {
-	ID          string
-	Name        string
-	Description string
-	ImageID     sql.NullString
-	// TODO следующее видео посвящено работе с деньгами в приложении
+	ID            string
+	Name          string
+	Description   string
+	ImageID       sql.NullString
 	Price         uint64
 	CurrencyID    uint32
 	Rating        uint32
@@ -59,5 +58,31 @@ func NewCreateProductStorageDTO(d *dto.CreateProductDTO) *CreateProductStorageDT
 		Specification: d.Specification,
 		CreatedAt:     now,
 		UpdatedAt:     &now,
+	}
+}
+
+type UpdateProductStorageDTO struct {
+	Name          *string                `mapstructure:"name,omitempty"`
+	Description   *string                `mapstructure:"description,omitempty"`
+	ImageID       *string                `mapstructure:"image_id,omitempty"`
+	Price         *uint64                `mapstructure:"price,omitempty"`
+	CurrencyID    *uint32                `mapstructure:"currency_id,omitempty"`
+	Rating        *uint32                `mapstructure:"rating,omitempty"`
+	CategoryID    *uint32                `mapstructure:"category_id,omitempty"`
+	Specification map[string]interface{} `mapstructure:"specification,omitempty"`
+	UpdatedAt     string                 `mapstructure:"updated_at,omitempty"`
+}
+
+func NewUpdateProductStorageDTO(d *dto.UpdateProductDTO) *UpdateProductStorageDTO {
+	return &UpdateProductStorageDTO{
+		Name:          d.Name,
+		ImageID:       d.ImageID,
+		Description:   d.Description,
+		Price:         d.Price,
+		CurrencyID:    d.CurrencyID,
+		Rating:        d.Rating,
+		CategoryID:    d.CategoryID,
+		Specification: d.Specification,
+		UpdatedAt:     time.Now().Format(time.RFC3339),
 	}
 }

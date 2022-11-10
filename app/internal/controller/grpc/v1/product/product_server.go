@@ -30,6 +30,46 @@ func (s *Server) AllProducts(
 	}, nil
 }
 
+func (s *Server) ProductByID(
+	ctx context.Context,
+	req *pb_prod_products.ProductByIDRequest,
+) (*pb_prod_products.ProductByIDResponse, error) {
+	one, err := s.policy.One(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb_prod_products.ProductByIDResponse{
+		Product: one.ToProto(),
+	}, nil
+}
+
+func (s *Server) UpdateProduct(
+	ctx context.Context,
+	req *pb_prod_products.UpdateProductRequest,
+) (*pb_prod_products.UpdateProductResponse, error) {
+	d := dto.NewUpdateProductDTOFromPB(req)
+
+	err := s.policy.Update(ctx, req.Id, d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb_prod_products.UpdateProductResponse{}, nil
+}
+
+func (s *Server) DeleteProduct(
+	ctx context.Context,
+	req *pb_prod_products.DeleteProductRequest,
+) (*pb_prod_products.DeleteProductResponse, error) {
+	err := s.policy.Delete(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb_prod_products.DeleteProductResponse{}, nil
+}
+
 func (s *Server) CreateProduct(
 	ctx context.Context,
 	req *pb_prod_products.CreateProductRequest,

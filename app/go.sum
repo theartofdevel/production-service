@@ -163,6 +163,8 @@ github.com/mattn/go-colorable v0.1.6/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope
 github.com/mattn/go-isatty v0.0.5/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
 github.com/mattn/go-isatty v0.0.7/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
+github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
+github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
@@ -203,10 +205,10 @@ github.com/swaggo/http-swagger v1.2.8 h1:TVjxLU7qoqofJ9qynJazmpTGs/p4Kx9FTp7YYwO
 github.com/swaggo/http-swagger v1.2.8/go.mod h1:FrQwV7rx+A5t11PIX8d+tFJa2GKx11RdAXQptllPQHg=
 github.com/swaggo/swag v1.8.1 h1:JuARzFX1Z1njbCGz+ZytBR15TFJwF2Q7fu8puJHhQYI=
 github.com/swaggo/swag v1.8.1/go.mod h1:ugemnJsPZm/kRwFUnzBlbHRd0JY9zE1M4F+uy2pAaPQ=
-github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030230920-7b2b349c1c8e h1:BF6zqxZn7spROo2c8iHYgPg6bt38lhcDhbdgrIS0Z8A=
-github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030230920-7b2b349c1c8e/go.mod h1:BW9g/US34xKv6S0hvnbx8TPle9GK8tzMtoKLXnOoLJ0=
-github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221030234413-e95bfb978124 h1:3/s1vWV8GHqAa5nEyUdU7HOPC/OyRl/INUtljjBKhV4=
-github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221030234413-e95bfb978124/go.mod h1:gkMyUf+otralzM4s3SAYlskJ/Mq0jDwn6k/SjINahKU=
+github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030234413-e95bfb978124 h1:XDry0FRmSlQ1tcK3qL5u/2vK7LMNDiOslWTaXxo+SKY=
+github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030234413-e95bfb978124/go.mod h1:BW9g/US34xKv6S0hvnbx8TPle9GK8tzMtoKLXnOoLJ0=
+github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221110003839-40dfa53b5a91 h1:5YqhmR/+A1+HtZXCi5x7gB7Rx1SH2Q+u77411TnXQN8=
+github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221110003839-40dfa53b5a91/go.mod h1:PDn7FHwI//6ezZm34JCSomzoxvMdqhn+sycn6DX+Mrw=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=

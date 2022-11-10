@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/mitchellh/mapstructure"
 	"production_service/internal/controller/dto"
 	"production_service/internal/domain/product/dao"
 	"production_service/internal/domain/product/model"
@@ -15,6 +16,8 @@ type repository interface {
 	All(context.Context, filter.Filterable, sort.Sortable) ([]*dao.ProductStorage, error)
 	One(context.Context, string) (*dao.ProductStorage, error)
 	Create(context.Context, *dao.CreateProductStorageDTO) error
+	Delete(context.Context, string) error
+	Update(context.Context, string, map[string]interface{}) error
 }
 
 type Service struct {
@@ -62,4 +65,21 @@ func (s *Service) One(ctx context.Context, id string) (*model.Product, error) {
 	}
 
 	return model.NewProduct(one), nil
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	return s.repository.Delete(ctx, id)
+}
+
+func (s *Service) Update(ctx context.Context, id string, d *dto.UpdateProductDTO) error {
+	storageDTO := dao.NewUpdateProductStorageDTO(d)
+
+	var updateProductMap map[string]interface{}
+
+	err := mapstructure.Decode(storageDTO, &updateProductMap)
+	if err != nil {
+		return errors.Wrap(err, "mapstructure.Decode UpdateProductDTO")
+	}
+
+	return s.repository.Update(ctx, id, updateProductMap)
 }

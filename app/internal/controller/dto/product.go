@@ -37,3 +37,36 @@ func NewCreateProductDTOFromPB(product *pb_prod_products.CreateProductRequest) *
 		Specification: spec,
 	}
 }
+
+type UpdateProductDTO struct {
+	Name          *string
+	Description   *string
+	ImageID       *string
+	Price         *uint64
+	CurrencyID    *uint32
+	Rating        *uint32
+	CategoryID    *uint32
+	Specification map[string]interface{}
+}
+
+func NewUpdateProductDTOFromPB(product *pb_prod_products.UpdateProductRequest) *UpdateProductDTO {
+	var spec map[string]interface{}
+	if product.Specification != nil {
+		err := json.Unmarshal([]byte(*product.Specification), &spec)
+		if err != nil {
+			logging.GetLogger().Warnf("failed to unmarshal product specification %v", err)
+			logging.GetLogger().Trace(product.Specification)
+		}
+	}
+
+	return &UpdateProductDTO{
+		Name:          product.Name,
+		Description:   product.Description,
+		ImageID:       product.ImageId,
+		Price:         product.Price,
+		CurrencyID:    product.CurrencyId,
+		Rating:        product.Rating,
+		CategoryID:    product.CategoryId,
+		Specification: spec,
+	}
+}
