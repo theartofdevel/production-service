@@ -101,35 +101,10 @@ func (s *ProductDAO) All(ctx context.Context, filtering filter.Filterable, sorti
 	return list, nil
 }
 
-func (s *ProductDAO) Create(ctx context.Context, dto *CreateProductStorageDTO) error {
+func (s *ProductDAO) Create(ctx context.Context, m map[string]interface{}) error {
 	sql, args, buildErr := s.queryBuilder.
 		Insert(tableScheme).
-		Columns(
-			"id",
-			"name",
-			"description",
-			"image_id",
-			"price",
-			"currency_id",
-			"rating",
-			"category_id",
-			"specification",
-			"created_at",
-			"updated_at",
-		).
-		Values(
-			dto.ID,
-			dto.Name,
-			dto.Description,
-			dto.ImageID,
-			dto.Price,
-			dto.CurrencyID,
-			dto.Rating,
-			dto.CategoryID,
-			dto.Specification,
-			dto.CreatedAt,
-			dto.UpdatedAt,
-		).
+		SetMap(m).
 		PlaceholderFormat(sq.Dollar).ToSql()
 
 	logger := logging.WithFields(ctx, map[string]interface{}{

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	pb_prod_products "github.com/theartofdevel/production-service-contracts/gen/go/prod_service/products/v1"
-	"production_service/internal/controller/dto"
 	"production_service/internal/domain/product/model"
+	"production_service/pkg/logging"
 )
 
 func (s *Server) AllProducts(
@@ -48,9 +48,14 @@ func (s *Server) UpdateProduct(
 	ctx context.Context,
 	req *pb_prod_products.UpdateProductRequest,
 ) (*pb_prod_products.UpdateProductResponse, error) {
-	d := dto.NewUpdateProductDTOFromPB(req)
+	product, err := s.policy.One(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.policy.Update(ctx, req.Id, d)
+	product.UpdateFromPB(req)
+
+	err = s.policy.Update(ctx, product)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +79,13 @@ func (s *Server) CreateProduct(
 	ctx context.Context,
 	req *pb_prod_products.CreateProductRequest,
 ) (*pb_prod_products.CreateProductResponse, error) {
-	d := dto.NewCreateProductDTOFromPB(req)
+	p, err := model.NewProductFromPB(req)
+	if err != nil {
+		logging.WithError(ctx, err).WithField("product in pb", req).Error("model.NewProductFromPB")
+		return nil, err
+	}
 
-	product, err := s.policy.CreateProduct(ctx, d)
+	product, err := s.policy.CreateProduct(ctx, p)
 	if err != nil {
 		return nil, err
 	}

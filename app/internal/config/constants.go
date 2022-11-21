@@ -1,7 +1,6 @@
 package config
 
-//goland:noinspection ALL
-const (
-	LISTEN_TYPE_SOCK = "sock"
-	LISTEN_TYPE_PORT = "port"
-)
+import "time"
+
+// SQLDateFormat - date format for struct fields
+const SQLDateFormat = time.RFC3339
