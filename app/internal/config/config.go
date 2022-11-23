@@ -11,8 +11,8 @@ import (
 )
 
 type Config struct {
-	IsDebug       bool `yaml:"is-debug" env:"IS_DEBUG" env-default:"false"`
-	IsDevelopment bool `yaml:"is-development" env:"IS_DEV" env-default:"false"`
+	IsDebug       *bool `yaml:"is-debug" env:"IS_DEBUG" env-default:"false"`
+	IsDevelopment *bool `yaml:"is-development" env:"IS_DEV" env-default:"false"`
 	HTTP          struct {
 		IP           string        `yaml:"ip" env:"HTTP-IP"`
 		Port         int           `yaml:"port" env:"HTTP-PORT"`
@@ -21,11 +21,11 @@ type Config struct {
 		CORS         struct {
 			AllowedMethods     []string `yaml:"allowed_methods" env:"HTTP-CORS-ALLOWED-METHODS"`
 			AllowedOrigins     []string `yaml:"allowed_origins"`
-			AllowCredentials   bool     `yaml:"allow_credentials"`
+			AllowCredentials   *bool    `yaml:"allow_credentials"`
 			AllowedHeaders     []string `yaml:"allowed_headers"`
-			OptionsPassthrough bool     `yaml:"options_passthrough"`
+			OptionsPassthrough *bool    `yaml:"options_passthrough"`
 			ExposedHeaders     []string `yaml:"exposed_headers"`
-			Debug              bool     `yaml:"debug"`
+			Debug              *bool    `yaml:"debug"`
 		} `yaml:"cors"`
 	} `yaml:"http"`
 	GRPC struct {
