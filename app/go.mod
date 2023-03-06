@@ -12,6 +12,7 @@ require (
 	github.com/jackc/pgconn v1.12.0
 	github.com/jackc/pgx/v4 v4.16.0
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.8.2
 	github.com/sirupsen/logrus v1.8.1
@@ -19,7 +20,7 @@ require (
 	github.com/swaggo/swag v1.8.1
 	github.com/theartofdevel/production-service-contracts/gen/go/common v0.0.0-20221030234413-e95bfb978124
 	github.com/theartofdevel/production-service-contracts/gen/go/prod_service v0.0.0-20221110003839-40dfa53b5a91
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	google.golang.org/grpc v1.50.1
 )
 
@@ -44,13 +45,12 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2 // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
-	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
-	golang.org/x/sys v0.0.0-20220502124256-b6088ccd6cba // indirect
-	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.10 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
