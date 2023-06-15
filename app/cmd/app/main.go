@@ -5,23 +5,23 @@ import (
 
 	"production_service/internal/app"
 	"production_service/internal/config"
-	"production_service/pkg/logging"
+	"production_service/pkg/common/logging"
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	logging.Info(ctx, "config initializing")
+	logging.L(ctx).Info("config initializing")
 	cfg := config.GetConfig()
 
 	ctx = logging.ContextWithLogger(ctx, logging.NewLogger())
 
 	a, err := app.NewApp(ctx, cfg)
 	if err != nil {
-		logging.Fatal(ctx, err)
+		logging.WithError(ctx, err).Fatal("app.NewApp")
 	}
 
-	logging.Info(ctx, "Running Application")
+	logging.L(ctx).Info("Running Application")
 	a.Run(ctx)
 }

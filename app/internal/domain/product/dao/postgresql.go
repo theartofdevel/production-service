@@ -2,40 +2,45 @@ package dao
 
 import (
 	"context"
+	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
-	"production_service/pkg/api/filter"
-	"production_service/pkg/api/sort"
-	db "production_service/pkg/client/postgresql/model"
-	"production_service/pkg/errors"
-	"production_service/pkg/logging"
+	"production_service/internal/dal/postgres"
+	"production_service/internal/domain/product/model"
+	psql "production_service/pkg/postgresql"
+	"production_service/pkg/tracing"
 )
 
 type ProductDAO struct {
-	queryBuilder sq.StatementBuilderType
-	client       PostgreSQLClient
+	qb     sq.StatementBuilderType
+	client psql.Client
 }
 
-func NewProductStorage(client PostgreSQLClient) *ProductDAO {
+func NewProductStorage(client psql.Client) *ProductDAO {
 	return &ProductDAO{
-		queryBuilder: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
-		client:       client,
+		qb:     sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		client: client,
 	}
 }
 
-const (
-	scheme      = "public"
-	table       = "product"
-	tableScheme = scheme + "." + table
-)
+func (repo *ProductDAO) All(ctx context.Context) ([]model.Product, error) {
+	all, err := repo.findBy(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-func (s *ProductDAO) All(ctx context.Context, filtering filter.Filterable, sorting sort.Sortable) ([]*ProductStorage, error) {
-	sortDB := db.NewSortOptions(sorting)
-	filterDB := db.NewFilters(filtering)
+	resp := make([]model.Product, len(all))
+	for i, e := range all {
+		resp[i] = e.ToDomain()
+	}
 
-	query := s.queryBuilder.
-		Select("id").
-		Columns(
+	return resp, nil
+}
+
+func (repo *ProductDAO) findBy(ctx context.Context) ([]ProductStorage, error) {
+	statement := repo.qb.
+		Select(
+			"id",
 			"name",
 			"description",
 			"image_id",
@@ -47,201 +52,57 @@ func (s *ProductDAO) All(ctx context.Context, filtering filter.Filterable, sorti
 			"created_at",
 			"updated_at",
 		).
-		From(tableScheme)
+		From(postgres.ProductTable + " p")
 
-	query = filterDB.Enrich(query, "")
-	query = sortDB.Sort(query, "")
-
-	sql, args, err := query.ToSql()
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"sql":   sql,
-		"table": tableScheme,
-		"args":  args,
-	})
+	query, args, err := statement.ToSql()
 	if err != nil {
-		err = db.ErrCreateQuery(err)
-		logger.Error(err)
+		err = psql.ErrCreateQuery(err)
+		tracing.Error(ctx, err)
+
 		return nil, err
 	}
 
-	rows, err := s.client.Query(ctx, sql, args...)
+	tracing.SpanEvent(ctx, "Select Product")
+	tracing.TraceVal(ctx, "SQL", query)
+	for i, arg := range args {
+		tracing.TraceIVal(ctx, "arg-"+strconv.Itoa(i), arg)
+	}
+
+	rows, err := repo.client.Query(ctx, query, args...)
 	if err != nil {
-		err = db.ErrDoQuery(err)
-		logger.Error(err)
+		err = psql.ErrDoQuery(err)
+		tracing.Error(ctx, err)
+
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	list := make([]*ProductStorage, 0)
+	entities := make([]ProductStorage, rows.CommandTag().RowsAffected())
 
 	for rows.Next() {
-		ps := ProductStorage{}
+		var e ProductStorage
 		if err = rows.Scan(
-			&ps.ID,
-			&ps.Name,
-			&ps.Description,
-			&ps.ImageID,
-			&ps.Price,
-			&ps.CurrencyID,
-			&ps.Rating,
-			&ps.CategoryID,
-			&ps.Specification,
-			&ps.CreatedAt,
-			&ps.UpdatedAt,
+			&e.ID,
+			&e.Name,
+			&e.Description,
+			&e.ImageID,
+			&e.Price,
+			&e.CurrencyID,
+			&e.Rating,
+			&e.CategoryID,
+			&e.Specification,
+			&e.CreatedAt,
+			&e.UpdatedAt,
 		); err != nil {
-			err = db.ErrScan(err)
-			logger.Error(err)
+			err = psql.ErrScan(psql.ParsePgError(err))
+			tracing.Error(ctx, err)
+
 			return nil, err
 		}
 
-		list = append(list, &ps)
+		entities = append(entities, e)
 	}
 
-	return list, nil
-}
-
-func (s *ProductDAO) Create(ctx context.Context, m map[string]interface{}) error {
-	sql, args, buildErr := s.queryBuilder.
-		Insert(tableScheme).
-		SetMap(m).
-		PlaceholderFormat(sq.Dollar).ToSql()
-
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"sql":   sql,
-		"table": tableScheme,
-		"args":  args,
-	})
-	if buildErr != nil {
-		buildErr = db.ErrCreateQuery(buildErr)
-		logger.Error(buildErr)
-		return buildErr
-	}
-
-	if exec, execErr := s.client.Exec(ctx, sql, args...); execErr != nil {
-		execErr = db.ErrDoQuery(execErr)
-		logger.Error(execErr)
-		return execErr
-	} else if exec.RowsAffected() == 0 || !exec.Insert() {
-		execErr = db.ErrDoQuery(errors.New("product was not created. 0 rows were affected"))
-		logger.Error(execErr)
-		return execErr
-	}
-
-	return nil
-}
-
-func (s *ProductDAO) One(ctx context.Context, id string) (*ProductStorage, error) {
-	sql, args, buildErr := s.queryBuilder.
-		Select("id").
-		Columns(
-			"name",
-			"description",
-			"image_id",
-			"price",
-			"currency_id",
-			"rating",
-			"category_id",
-			"specification",
-			"created_at",
-			"updated_at",
-		).
-		From(tableScheme).
-		Where(sq.Eq{"id": id}).ToSql()
-
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"sql":   sql,
-		"table": tableScheme,
-		"args":  args,
-	})
-	if buildErr != nil {
-		buildErr = db.ErrCreateQuery(buildErr)
-		logger.Error(buildErr)
-		return nil, buildErr
-	}
-
-	var ps ProductStorage
-
-	err := s.client.QueryRow(ctx, sql, args...).Scan(
-		&ps.ID,
-		&ps.Name,
-		&ps.Description,
-		&ps.ImageID,
-		&ps.Price,
-		&ps.CurrencyID,
-		&ps.Rating,
-		&ps.CategoryID,
-		&ps.Specification,
-		&ps.CreatedAt,
-		&ps.UpdatedAt,
-	)
-	if err != nil {
-		err = db.ErrDoQuery(err)
-		logger.Error(err)
-		return nil, err
-	}
-
-	return &ps, nil
-}
-
-func (s *ProductDAO) Update(ctx context.Context, id string, m map[string]interface{}) error {
-	sql, args, buildErr := s.queryBuilder.
-		Update(tableScheme).
-		SetMap(m).
-		Where(sq.Eq{"id": id}).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
-
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"sql":   sql,
-		"table": tableScheme,
-		"args":  args,
-	})
-	if buildErr != nil {
-		buildErr = db.ErrCreateQuery(buildErr)
-		logger.Error(buildErr)
-		return buildErr
-	}
-
-	if exec, execErr := s.client.Exec(ctx, sql, args...); execErr != nil {
-		execErr = db.ErrDoQuery(execErr)
-		logger.Error(execErr)
-		return execErr
-	} else if exec.RowsAffected() == 0 || !exec.Update() {
-		execErr = db.ErrDoQuery(errors.New("product was not updated. 0 rows were affected"))
-		logger.Error(execErr)
-		return execErr
-	}
-
-	return nil
-}
-
-func (s *ProductDAO) Delete(ctx context.Context, id string) error {
-	sql, args, buildErr := s.queryBuilder.
-		Delete(tableScheme).
-		Where(sq.Eq{"id": id}).
-		ToSql()
-
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"sql":   sql,
-		"table": tableScheme,
-		"args":  args,
-	})
-	if buildErr != nil {
-		buildErr = db.ErrCreateQuery(buildErr)
-		logger.Error(buildErr)
-		return buildErr
-	}
-
-	if exec, execErr := s.client.Exec(ctx, sql, args...); execErr != nil {
-		execErr = db.ErrDoQuery(execErr)
-		logger.Error(execErr)
-		return execErr
-	} else if exec.RowsAffected() == 0 || !exec.Delete() {
-		execErr = db.ErrDoQuery(errors.New("product was not deleted. 0 rows were affected"))
-		logger.Error(execErr)
-		return execErr
-	}
-
-	return nil
+	return entities, nil
 }

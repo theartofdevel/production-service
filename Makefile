@@ -13,19 +13,3 @@ $(APP_BIN):
 .PHONY: clean
 clean:
 	rm -rf ./app/build || true
-
-.PHONY: swagger
-swagger:
-	swag init -g ./app/cmd/app/main.go -o ./app/docs
-
-.PHONY: migrate
-migrate:
-	$(APP_BIN) migrate -version $(version)
-
-.PHONY: migrate.down
-migrate.down:
-	$(APP_BIN) migrate -seq down
-
-.PHONY: migrate.up
-migrate.up:
-	$(APP_BIN) migrate -seq up

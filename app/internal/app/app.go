@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,15 +13,15 @@ import (
 	"google.golang.org/grpc/reflection"
 	_ "production_service/docs"
 	"production_service/internal/config"
-	product "production_service/internal/controller/grpc/v1/product"
+	"production_service/internal/controller/grpc/v1/product"
 	"production_service/internal/domain/product/dao"
 	"production_service/internal/domain/product/policy"
 	"production_service/internal/domain/product/service"
-	"production_service/pkg/client/postgresql"
-	"production_service/pkg/logging"
-	"production_service/pkg/metric"
+	"production_service/pkg/common/core/closer"
+	"production_service/pkg/common/errors"
+	"production_service/pkg/common/logging"
+	psql "production_service/pkg/postgresql"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -35,31 +34,32 @@ type App struct {
 	httpServer *http.Server
 	grpcServer *grpc.Server
 
-	pgClient *pgxpool.Pool
-
 	productServiceServer pb_prod_products.ProductServiceServer
 }
 
-func NewApp(ctx context.Context, config *config.Config) (App, error) {
-	logging.Info(ctx, "router initializing")
+func NewApp(ctx context.Context, cfg *config.Config) (App, error) {
+	logging.L(ctx).Info("router initializing")
 	router := httprouter.New()
 
-	logging.Info(ctx, "swagger docs initializing")
+	logging.L(ctx).Info("swagger docs initializing")
 	router.Handler(http.MethodGet, "/swagger", http.RedirectHandler("/swagger/index.html", http.StatusMovedPermanently))
 	router.Handler(http.MethodGet, "/swagger/*any", httpSwagger.WrapHandler)
 
-	logging.Info(ctx, "heartbeat metric initializing")
-	metricHandler := metric.Handler{}
-	metricHandler.Register(router)
-
-	pgConfig := postgresql.NewPgConfig(
-		config.PostgreSQL.Username, config.PostgreSQL.Password,
-		config.PostgreSQL.Host, config.PostgreSQL.Port, config.PostgreSQL.Database,
+	pgDsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		cfg.PostgreSQL.Username,
+		cfg.PostgreSQL.Password,
+		cfg.PostgreSQL.Host,
+		cfg.PostgreSQL.Port,
+		cfg.PostgreSQL.Database,
 	)
-	pgClient, err := postgresql.NewClient(ctx, 5, time.Second*5, pgConfig)
+
+	pgClient, err := psql.NewClient(ctx, 5, 3*time.Second, pgDsn, false)
 	if err != nil {
-		logging.GetLogger().Fatal(ctx, err)
+		return App{}, errors.Wrap(err, "psql.NewClient")
 	}
+
+	closer.AddN(pgClient)
 
 	productStorage := dao.NewProductStorage(pgClient)
 	productService := service.NewProductService(productStorage)
@@ -70,9 +70,8 @@ func NewApp(ctx context.Context, config *config.Config) (App, error) {
 	)
 
 	return App{
-		cfg:                  config,
+		cfg:                  cfg,
 		router:               router,
-		pgClient:             pgClient,
 		productServiceServer: productServiceServer,
 	}, nil
 }
@@ -89,18 +88,19 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 func (a *App) startGRPC(ctx context.Context, server pb_prod_products.ProductServiceServer) error {
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"IP":   a.cfg.GRPC.IP,
-		"Port": a.cfg.GRPC.Port,
-	})
+	logger := logging.WithFields(ctx,
+		logging.StringField("IP", a.cfg.GRPC.IP),
+		logging.IntField("Port", a.cfg.GRPC.Port),
+	)
+
 	logger.Info("gRPC Server initializing")
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", a.cfg.GRPC.IP, a.cfg.GRPC.Port))
 	if err != nil {
-		logger.WithError(err).Fatal("failed to create listener")
+		logger.With(logging.ErrorField(err)).Fatal("failed to create listener")
 	}
 
-	serverOptions := []grpc.ServerOption{}
+	var serverOptions []grpc.ServerOption
 
 	a.grpcServer = grpc.NewServer(serverOptions...)
 
@@ -112,26 +112,27 @@ func (a *App) startGRPC(ctx context.Context, server pb_prod_products.ProductServ
 }
 
 func (a *App) startHTTP(ctx context.Context) error {
-	logger := logging.WithFields(ctx, map[string]interface{}{
-		"IP":   a.cfg.HTTP.IP,
-		"Port": a.cfg.HTTP.Port,
-	})
+	logger := logging.WithFields(ctx,
+		logging.StringField("IP", a.cfg.HTTP.IP),
+		logging.IntField("Port", a.cfg.HTTP.Port),
+	)
 	logger.Info("HTTP Server initializing")
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", a.cfg.HTTP.IP, a.cfg.HTTP.Port))
 	if err != nil {
-		logger.WithError(err).Fatal("failed to create listener")
+		logger.With(logging.ErrorField(err)).Fatal("failed to create listener")
 	}
 
-	logger.WithFields(map[string]interface{}{
-		"AllowedMethods":     a.cfg.HTTP.CORS.AllowedMethods,
-		"AllowedOrigins":     a.cfg.HTTP.CORS.AllowedOrigins,
-		"AllowCredentials":   a.cfg.HTTP.CORS.AllowCredentials,
-		"AllowedHeaders":     a.cfg.HTTP.CORS.AllowedHeaders,
-		"OptionsPassthrough": a.cfg.HTTP.CORS.OptionsPassthrough,
-		"ExposedHeaders":     a.cfg.HTTP.CORS.ExposedHeaders,
-		"Debug":              a.cfg.HTTP.CORS.Debug,
-	})
+	logger.With(
+		logging.StringsField("AllowedMethods", a.cfg.HTTP.CORS.AllowedMethods),
+		logging.StringsField("AllowedOrigins", a.cfg.HTTP.CORS.AllowedOrigins),
+		logging.BoolField("AllowCredentials", a.cfg.HTTP.CORS.AllowCredentials),
+		logging.StringsField("AllowedHeaders", a.cfg.HTTP.CORS.AllowedHeaders),
+		logging.BoolField("OptionsPassthrough", a.cfg.HTTP.CORS.OptionsPassthrough),
+		logging.StringsField("ExposedHeaders", a.cfg.HTTP.CORS.ExposedHeaders),
+		logging.BoolField("Debug", a.cfg.HTTP.CORS.Debug),
+	).Info("CORS initializing")
+
 	c := cors.New(cors.Options{
 		AllowedMethods:     a.cfg.HTTP.CORS.AllowedMethods,
 		AllowedOrigins:     a.cfg.HTTP.CORS.AllowedOrigins,
@@ -153,14 +154,16 @@ func (a *App) startHTTP(ctx context.Context) error {
 	if err = a.httpServer.Serve(listener); err != nil {
 		switch {
 		case errors.Is(err, http.ErrServerClosed):
-			logger.Warning("server shutdown")
+			logger.Warn("server shutdown")
 		default:
-			logger.Fatal(err)
+			logger.With(logging.ErrorField(err)).Fatal("failed to start server")
 		}
 	}
+
 	err = a.httpServer.Shutdown(context.Background())
 	if err != nil {
-		logger.Fatal(err)
+		logger.With(logging.ErrorField(err)).Fatal("failed to shutdown server")
 	}
+
 	return err
 }
