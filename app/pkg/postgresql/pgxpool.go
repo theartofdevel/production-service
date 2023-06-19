@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -41,31 +40,33 @@ func NewClient(
 	dsn string,
 	binary bool,
 ) (pool *pgxpool.Pool, err error) {
+	pgxCfg, parseConfigErr := pgxpool.ParseConfig(dsn)
+	if parseConfigErr != nil {
+		log.Printf("Unable to parse config: %v\n", parseConfigErr)
+		return nil, parseConfigErr
+	}
+
+	if binary {
+		pgxCfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheDescribe
+	}
+
+	pool, parseConfigErr = pgxpool.NewWithConfig(ctx, pgxCfg)
+	if parseConfigErr != nil {
+		log.Printf("Failed to parse PostgreSQL configuration due to error: %v\n", parseConfigErr)
+		return nil, parseConfigErr
+	}
+
 	err = DoWithAttempts(func() error {
-		ctxWto, cancel := context.WithTimeout(ctx, 5*time.Second) //nolint:gomnd
-		defer cancel()
-
-		pgxCfg, parseConfigErr := pgxpool.ParseConfig(dsn)
-		if parseConfigErr != nil {
-			log.Fatalf("Unable to parse config: %v\n", parseConfigErr)
-		}
-
-		if binary {
-			pgxCfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheDescribe
-		}
-
-		pool, parseConfigErr = pgxpool.NewWithConfig(ctxWto, pgxCfg)
-		if parseConfigErr != nil {
-			log.Println("Failed to connect to postgres... Going to do the next attempt")
-
-			return parseConfigErr
+		pingErr := pool.Ping(ctx)
+		if pingErr != nil {
+			log.Printf("Failed to connect to postgres due to error %v... Going to do the next attempt\n", pingErr)
+			return pingErr
 		}
 
 		return nil
 	}, maxAttempts, maxDelay)
-
 	if err != nil {
-		log.Fatal("All attempts are exceeded. Unable to connect to postgres")
+		log.Fatal("All attempts are exceeded. Unable to connect to PostgreSQL")
 	}
 
 	return pool, nil

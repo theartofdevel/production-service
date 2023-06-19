@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pb_prod_products "github.com/theartofdevel/production-service-contracts/gen/go/prod_service/products/v1"
+	"production_service/pkg/common/logging"
 )
 
 func (s *Server) AllProducts(
@@ -28,6 +29,7 @@ func (s *Server) CreateProduct(
 	// business logic
 	createProductOutput, err := s.policy.CreateProduct(ctx, input)
 	if err != nil {
+		logging.WithError(ctx, err).Error("policy.CreateProduct")
 		return nil, err
 	}
 

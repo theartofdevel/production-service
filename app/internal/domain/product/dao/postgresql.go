@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
+	"production_service/internal/dal"
 	"production_service/internal/dal/postgres"
 	"production_service/internal/domain/product/model"
 	psql "production_service/pkg/postgresql"
@@ -35,6 +36,62 @@ func (repo *ProductDAO) All(ctx context.Context) ([]model.Product, error) {
 	}
 
 	return resp, nil
+}
+
+// Create
+func (repo *ProductDAO) Create(ctx context.Context, req model.CreateProduct) error {
+	sql, args, err := repo.qb.
+		Insert(postgres.ProductTable).
+		Columns(
+			"id",
+			"name",
+			"description",
+			"image_id",
+			"price",
+			"currency_id",
+			"rating",
+			"category_id",
+			"specification",
+			"created_at",
+		).
+		Values(
+			req.ID,
+			req.Name,
+			req.Description,
+			req.ImageID,
+			req.Price,
+			req.CurrencyID,
+			req.Rating,
+			req.CategoryID,
+			req.Specification,
+			req.CreatedAt,
+		).ToSql()
+	if err != nil {
+		err = psql.ErrCreateQuery(err)
+		tracing.Error(ctx, err)
+
+		return err
+	}
+
+	tracing.SpanEvent(ctx, "Insert Product query")
+	tracing.TraceVal(ctx, "sql", sql)
+	for i, arg := range args {
+		tracing.TraceIVal(ctx, "arg-"+strconv.Itoa(i), arg)
+	}
+
+	cmd, execErr := repo.client.Exec(ctx, sql, args...)
+	if execErr != nil {
+		execErr = psql.ErrDoQuery(execErr)
+		tracing.Error(ctx, execErr)
+
+		return execErr
+	}
+
+	if cmd.RowsAffected() == 0 {
+		return dal.ErrNothingInserted
+	}
+
+	return nil
 }
 
 func (repo *ProductDAO) findBy(ctx context.Context) ([]ProductStorage, error) {

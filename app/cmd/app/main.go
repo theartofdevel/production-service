@@ -23,5 +23,9 @@ func main() {
 	}
 
 	logging.L(ctx).Info("Running Application")
-	a.Run(ctx)
+	err = a.Run(ctx)
+	if err != nil {
+		logging.WithError(ctx, err).Fatal("app.Run")
+		return
+	}
 }

@@ -7,17 +7,22 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 	pb_prod_products "github.com/theartofdevel/production-service-contracts/gen/go/prod_service/products/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	_ "production_service/docs"
 	"production_service/internal/config"
-	"production_service/internal/controller/grpc/v1/product"
+	grpc_v1_product "production_service/internal/controller/grpc/v1/product"
+	"production_service/internal/dal/postgres/migrations"
+	policy_product "production_service/internal/domain/policy/product"
 	"production_service/internal/domain/product/dao"
-	"production_service/internal/domain/product/policy"
 	"production_service/internal/domain/product/service"
+	"production_service/pkg/common/core/clock"
 	"production_service/pkg/common/core/closer"
+	"production_service/pkg/common/core/identity"
 	"production_service/pkg/common/errors"
 	"production_service/pkg/common/logging"
 	psql "production_service/pkg/postgresql"
@@ -45,6 +50,14 @@ func NewApp(ctx context.Context, cfg *config.Config) (App, error) {
 	router.Handler(http.MethodGet, "/swagger", http.RedirectHandler("/swagger/index.html", http.StatusMovedPermanently))
 	router.Handler(http.MethodGet, "/swagger/*any", httpSwagger.WrapHandler)
 
+	logging.WithFields(ctx,
+		logging.StringField("username", cfg.PostgreSQL.Username),
+		logging.StringField("password", "<REMOVED>"),
+		logging.StringField("host", cfg.PostgreSQL.Host),
+		logging.StringField("port", cfg.PostgreSQL.Port),
+		logging.StringField("database", cfg.PostgreSQL.Database),
+	).Info("PostgreSQL initializing")
+
 	pgDsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s",
 		cfg.PostgreSQL.Username,
@@ -54,6 +67,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (App, error) {
 		cfg.PostgreSQL.Database,
 	)
 
+	// TODO to config
 	pgClient, err := psql.NewClient(ctx, 5, 3*time.Second, pgDsn, false)
 	if err != nil {
 		return App{}, errors.Wrap(err, "psql.NewClient")
@@ -61,10 +75,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (App, error) {
 
 	closer.AddN(pgClient)
 
+	cl := clock.New()
+	generator := identity.NewGenerator()
+
 	productStorage := dao.NewProductStorage(pgClient)
 	productService := service.NewProductService(productStorage)
-	productPolicy := policy.NewProductPolicy(productService)
-	productServiceServer := product.NewServer(
+	productPolicy := policy_product.NewProductPolicy(productService, generator, cl)
+	productServiceServer := grpc_v1_product.NewServer(
 		productPolicy,
 		pb_prod_products.UnimplementedProductServiceServer{},
 	)
@@ -77,13 +94,21 @@ func NewApp(ctx context.Context, cfg *config.Config) (App, error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
+	err := a.migrate(ctx)
+	if err != nil {
+		return err
+	}
+
 	grp, ctx := errgroup.WithContext(ctx)
+
 	grp.Go(func() error {
 		return a.startHTTP(ctx)
 	})
+
 	grp.Go(func() error {
 		return a.startGRPC(ctx, a.productServiceServer)
 	})
+
 	return grp.Wait()
 }
 
@@ -166,4 +191,50 @@ func (a *App) startHTTP(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func (a *App) migrate(ctx context.Context) error {
+	stdlib.GetDefaultDriver()
+
+	logging.WithFields(ctx,
+		logging.StringField("username", a.cfg.PostgreSQL.Username),
+		logging.StringField("password", "<REMOVED>"),
+		logging.StringField("host", a.cfg.PostgreSQL.Host),
+		logging.StringField("port", a.cfg.PostgreSQL.Port),
+		logging.StringField("database", a.cfg.PostgreSQL.Database),
+	).Info("PostgreSQL Migrate initializing")
+
+	pgDsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		a.cfg.PostgreSQL.Username,
+		a.cfg.PostgreSQL.Password,
+		a.cfg.PostgreSQL.Host,
+		a.cfg.PostgreSQL.Port,
+		a.cfg.PostgreSQL.Database,
+	)
+
+	db, err := goose.OpenDBWithDriver("pgx", pgDsn)
+	if err != nil {
+		return err
+	}
+
+	goose.SetBaseFS(&migrations.Content)
+
+	err = goose.SetDialect("postgres")
+	if err != nil {
+		return err
+	}
+
+	logging.L(ctx).Info("migration up till last")
+	err = goose.Up(db, ".")
+	if err != nil {
+		return err
+	}
+
+	err = db.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

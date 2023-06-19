@@ -4,6 +4,7 @@ import (
 	pb_prod_products "github.com/theartofdevel/production-service-contracts/gen/go/prod_service/products/v1"
 	"production_service/internal/domain/policy/product"
 	"production_service/internal/domain/product/model"
+	"production_service/pkg/utils/pointer"
 )
 
 func NewCreateProductInput(req *pb_prod_products.CreateProductRequest) (product.CreateProductInput, error) {
@@ -26,7 +27,7 @@ func NewCreateProductResponse(out product.CreateProductOutput) *pb_prod_products
 }
 
 func NewProductPB(ent model.Product) *pb_prod_products.Product {
-	return &pb_prod_products.Product{
+	pbProduct := &pb_prod_products.Product{
 		Id:          ent.ID,
 		Name:        ent.Name,
 		Description: ent.Description,
@@ -36,6 +37,14 @@ func NewProductPB(ent model.Product) *pb_prod_products.Product {
 		Rating:      ent.Rating,
 		CategoryId:  ent.CategoryID,
 		CreatedAt:   ent.CreatedAt.UnixMilli(),
-		UpdatedAt:   ent.UpdatedAt.UnixMilli(),
+		UpdatedAt:   nil,
 	}
+
+	// TODO: updated_at возвращается как строка с 0
+
+	if ent.UpdatedAt != nil {
+		pbProduct.UpdatedAt = pointer.Pointer(ent.UpdatedAt.UnixMilli())
+	}
+
+	return pbProduct
 }

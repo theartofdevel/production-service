@@ -15,6 +15,7 @@ import (
 var (
 	ErrProductPriceIsNegative = apperror.NewAppError(http.StatusBadRequest, "00250", "product price is negative")
 	ErrProductPriceIsZero     = apperror.NewAppError(http.StatusBadRequest, "00251", "product price is zero")
+	ErrProductRating          = apperror.NewAppError(http.StatusBadRequest, "00252", "invalid product rating")
 )
 
 type IdentityGenerator interface {
@@ -32,11 +33,12 @@ type Policy struct {
 	clock    Clock
 }
 
-func NewProductPolicy(productService *service.ProductService, clock clock.Clock) *Policy {
+func NewProductPolicy(productService *service.ProductService, identity IdentityGenerator, clock clock.Clock) *Policy {
 	return &Policy{
 		productService: productService,
 
-		clock: clock,
+		identity: identity,
+		clock:    clock,
 	}
 }
 
@@ -50,6 +52,9 @@ func (p *Policy) All(ctx context.Context) ([]model.Product, error) {
 }
 
 func (p *Policy) CreateProduct(ctx context.Context, input CreateProductInput) (CreateProductOutput, error) {
+	if input.Rating < 0 || input.Rating > 5 {
+		return CreateProductOutput{}, ErrProductRating
+	}
 	if input.Price.IsNegative() {
 		return CreateProductOutput{}, ErrProductPriceIsNegative
 	}

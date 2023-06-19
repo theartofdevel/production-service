@@ -1,0 +1,18 @@
+services:
+  postgresql:
+    image: postgres:14-alpine
+    container_name: ps-psql
+    ports:
+      - "25432:5432"
+    environment:
+      - POSTGRES_DB=prodservice
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - ps
+
+networks:
+  ps:
+    name: ps

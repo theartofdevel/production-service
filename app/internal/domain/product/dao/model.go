@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"production_service/internal/domain/product/model"
 	"production_service/pkg/utils/pointer"
 )
@@ -13,7 +14,7 @@ type ProductStorage struct {
 	Name          string
 	Description   string
 	ImageID       sql.NullString
-	Price         uint64
+	Price         decimal.Decimal
 	CurrencyID    uint32
 	Rating        uint32
 	CategoryID    uint32

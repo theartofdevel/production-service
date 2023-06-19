@@ -8,6 +8,13 @@ app:
     email: admin@taod.ru
     password: "123"
 
+postgresql:
+  host: 0.0.0.0
+  port: "25432"
+  username: postgres
+  password: postgres
+  database: prodservice
+
 grpc:
   ip: 0.0.0.0
   port: 30000
@@ -37,10 +44,3 @@ http:
       - "Location"
       - "Authorization"
       - "Content-Disposition"
-
-postgresql:
-  host: 0.0.0.0
-  port: "5432"
-  username: postgres
-  password: postgres
-  database: prodservice
