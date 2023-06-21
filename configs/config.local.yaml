@@ -1,9 +1,9 @@
 ---
 app:
-  is-debug: true
+  is_debug: true
   id: prod-service
   name: Production Service
-  log-level: trace
+  log_level: trace
   admin:
     email: admin@taod.ru
     password: "123"
@@ -22,13 +22,15 @@ grpc:
 http:
   ip: 0.0.0.0
   port: 30001
+  read_timeout: 15s
+  write_timeout: 15s
   cors:
     debug: true
-    allowed-methods: ["GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE"]
-    allowed-origins:
+    allowed_methods: ["GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE"]
+    allowed_origins:
       - "http://localhost:3000"
-    allow-credentials: true
-    allowed-headers:
+    allow_credentials: true
+    allowed_headers:
       - "Authorization"
       - "Location"
       - "Charset"
@@ -39,8 +41,8 @@ http:
       - "Content-Length"
       - "Accept-Encoding"
       - "X-CSRF-Token"
-    options-passthrough: true
-    exposed-headers:
+    options_passthrough: true
+    exposed_headers:
       - "Location"
       - "Authorization"
       - "Content-Disposition"
