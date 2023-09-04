@@ -1,9 +1,17 @@
+---
+
 services:
+  app:
+    image: prod-service:local
+    container_name: ps-app
+    depends_on:
+      - postgresql
+    networks:
+      - ps
+
   postgresql:
     image: postgres:14-alpine
     container_name: ps-psql
-    ports:
-      - "25432:5432"
     environment:
       - POSTGRES_DB=prodservice
       - POSTGRES_USER=postgres
@@ -15,4 +23,3 @@ services:
 
 networks:
   ps:
-    name: ps

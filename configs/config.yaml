@@ -9,8 +9,8 @@ app:
     password: "123"
 
 postgresql:
-  host: 0.0.0.0
-  port: "25432"
+  host: ps-psql
+  port: "5432"
   username: postgres
   password: postgres
   database: prodservice
